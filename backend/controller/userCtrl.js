@@ -44,7 +44,7 @@ exports.fetchAllUser = async (req, res) => {
 exports.fetchOneUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await UserModel.findById({ _id: id }).populate("OwnedResidency");
+        const user = await UserModel.findById({ _id: id }).populate("favRsidenciesID");
         res.status(201).json({
             success: true,
             message: "User fetched Successfully",
@@ -149,3 +149,54 @@ exports.cancelBooking = async (req, res) => {
 }
 
 //add fav or not
+exports.favResidency = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const { id } = req.params;
+        const user = await UserModel.findOne({ email: email })
+        const index = user.favRsidenciesID.findIndex((i) => i.id === id);
+        if (user.favRsidenciesID.includes(id)) {
+            user.favRsidenciesID.splice(index, 1)
+            const data = await UserModel.findOneAndUpdate({ email: email }, { favRsidenciesID: user.favRsidenciesID }, { new: true })
+            res.status(200).json({
+                success: true,
+                message: "This residency is removed from your favorate's",
+                data: data
+            })
+        } else {
+            const data = await UserModel.findOneAndUpdate({ email: email }, { $push: { favRsidenciesID: id } }, { new: true });
+            res.status(200).json({
+                success: true,
+                message: "This residency is added in your favorate's",
+                data: data
+            })
+        }
+    } catch (error) {
+        res.status(501).json({
+            success: false,
+            message: "Failed to add or remove in Fav",
+            error: error.message
+        })
+    }
+}
+
+exports.fetchFavResidency = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const response = await UserModel.findById({ _id: id }).populate("favRsidenciesID")
+        res.status(201).json({
+            success: true,
+            message: "Successfully fetch fev",
+            data: response.favRsidenciesID
+        })
+
+
+    } catch (error) {
+        res.status(501).json({
+            success: false,
+            message: "Failed to fetch fav",
+            error: error.message
+        })
+    }
+
+}
